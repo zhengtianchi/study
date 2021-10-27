@@ -85,7 +85,7 @@ Golang内部有三个对象:
 
 - P对象(processor) 代表上下文（或者可以认为是cpu）
 - M(work thread)代表工作线程
-- G对象（goroutine）.
+- G对象（goroutine）
 
 正常情况下一个cpu对象启一个工作线程对象，线程去检查并执行goroutine对象。碰到goroutine对象阻塞的时候，会启动一个新的工作线程，以充分利用cpu资源。
 所有有时候线程对象会比处理器对象多很多.
@@ -1416,7 +1416,7 @@ output:
 > ./.go:14:7: invalid operation: a == b (mismatched types A and B)
 ```
 
-## struct 能不能进行比较？
+#### struct 能不能进行比较？
 
 - 不同类型的 struct 之间不能进行比较，编译期就会报错（GoLand 会直接提示）
 - 同类型的 struct 也分为两种情况，
@@ -1669,7 +1669,7 @@ goroutine作为Golang并发的核心，我们不仅要关注它们的创建和�
 
 goroutine的优雅退出方法有三种:
 
-1. 使用for-range退出
+1. **使用for-range退出**
 
 for-range是使用频率很高的结构，常用它来遍历数据，range能够感知channel的关闭，当channel被发送数据的协程关闭时，range就会结束，接着退出for循环。
 
@@ -1685,7 +1685,7 @@ go func(in <-chan int) {
 }(in)
 ```
 
-1. 使用select case ,ok退出
+1. **使用select case ,ok退出**
 
 for-select也是使用频率很高的结构，select提供了多路复用的能力，所以for-select可以让函数具有持续多路处理多个channel的能力。但select没有感知channel的关闭，这引出了2个问题：
 
@@ -3140,7 +3140,7 @@ defer延迟函数调用的函数参数的值在defer定义时候就确定了，�
 
 Goroutine 作为一种逻辑上理解的轻量级线程，需要维护执行用户代码的上下文信息。在运行过程中也需要消耗一定的内存来保存这类信息，而这些内存在目前版本的 Go 中是不会被释放的。
 
-因此，如果一个程序持续不断地产生新的 goroutine、且不结束已经创建的 goroutine 并复用这部分内存，就会造成内存泄漏的现象.
+**因此，如果一个程序持续不断地产生新的 goroutine、且不结束已经创建的 goroutine 并复用这部分内存，就会造成内存泄漏的现象.**
 
 例如:
 
