@@ -10,7 +10,7 @@ Context 在 Go1.7 之后就加入到了Go语言标准库中，准确说它是 **
 
 Context 也叫作“上下文”，是一个比较抽象的概念，一般理解为程序单元的一个运行状态、现场、快照。其中上下是指存在上下层的传递，上会把内容传递给下，程序单元则指的是 Goroutine。
 
-每个 Goroutine 在执行之前，都要先知道程序当前的执行状态，通常将这些执行状态封装在一个 Context 变量中，传递给要执行的 Goroutine 中。
+**每个 Goroutine 在执行之前，都要先知道程序当前的执行状态，通常将这些执行状态封装在一个 Context 变量中，传递给要执行的 Goroutine 中。**
 
 在网络编程下，当接收到一个网络请求 Request，在处理 Request 时，我们可能需要开启不同的 Goroutine 来获取数据与逻辑处理，即一个请求 Request，会在多个 Goroutine 中处理。而这些 Goroutine 可能需要共享 Request 的一些信息，同时当 Request 被取消或者超时的时候，所有从这个 Request 创建的所有 Goroutine 也应该被结束。
 
@@ -157,7 +157,7 @@ context deadline exceeded
 
 WithTimeout 的函数签名如下：
 
-```
+```go
 func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)
 ```
 
@@ -165,34 +165,82 @@ WithTimeout 函数返回 WithDeadline(parent, time.Now().Add(timeout))。
 
 取消此上下文将释放与其相关的资源，因此代码应该在此上下文中运行的操作完成后立即调用 cancel，示例代码如下：
 
-```
-package mainimport (    "context"    "fmt"    "time")func main() {    // 传递带有超时的上下文    // 告诉阻塞函数在超时结束后应该放弃其工作。    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)    defer cancel()    select {    case <-time.After(1 * time.Second):        fmt.Println("overslept")    case <-ctx.Done():        fmt.Println(ctx.Err()) // 终端输出"context deadline exceeded"    }}
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+func main() {
+    // 传递带有超时的上下文
+    // 告诉阻塞函数在超时结束后应该放弃其工作。
+    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+    defer cancel()
+
+    select {
+    case <-time.After(1 * time.Second):
+        fmt.Println("overslept")
+    case <-ctx.Done():
+        fmt.Println(ctx.Err()) // 终端输出"context deadline exceeded"
+    }
+}
 ```
 
 运行结果如下：
 
+```go
 go run main.go
 context deadline exceeded
+```
+
+
 
 #### WithValue
 
 WithValue 函数能够将请求作用域的数据与 Context 对象建立关系。函数声明如下：
 
+```go
 func WithValue(parent Context, key, val interface{}) Context
+```
 
 WithValue 函数接收 context 并返回派生的 context，其中值 val 与 key 关联，并通过 context 树与 context 一起传递。这意味着一旦获得带有值的 context，从中派生的任何 context 都会获得此值。不建议使用 context 值传递关键参数，函数应接收签名中的那些值，使其显式化。
 
 所提供的键必须是可比较的，并且不应该是 string 类型或任何其他内置类型，以避免使用上下文在包之间发生冲突。WithValue 的用户应该为键定义自己的类型，为了避免在分配给接口`{ } `时进行分配，上下文键通常具有具体类型 struct{}。或者，导出的上下文关键变量的静态类型应该是指针或接口。
 
-```
-package mainimport (    "context"    "fmt")func main() {    type favContextKey string // 定义一个key类型    // f:一个从上下文中根据key取value的函数    f := func(ctx context.Context, k favContextKey) {        if v := ctx.Value(k); v != nil {            fmt.Println("found value:", v)            return        }        fmt.Println("key not found:", k)    }    k := favContextKey("language")    // 创建一个携带key为k，value为"Go"的上下文    ctx := context.WithValue(context.Background(), k, "Go")    f(ctx, k)    f(ctx, favContextKey("color"))}
+```go
+package main
+import (
+    "context"
+    "fmt"
+)
+func main() {
+    type favContextKey string // 定义一个key类型
+    // f:一个从上下文中根据key取value的函数
+    f := func(ctx context.Context, k favContextKey) {
+        if v := ctx.Value(k); v != nil {
+            fmt.Println("found value:", v)
+            return
+        }
+        fmt.Println("key not found:", k)
+    }
+    k := favContextKey("language")
+    // 创建一个携带key为k，value为"Go"的上下文
+    ctx := context.WithValue(context.Background(), k, "Go")
+    f(ctx, k)
+    f(ctx, favContextKey("color"))
+}
 ```
 
 运行结果如下：
 
+```go
 go run main.go
 found value: Go
 key not found: color
+```
 
 使用 Context 的注意事项：
 
